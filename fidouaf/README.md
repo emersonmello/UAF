@@ -2,6 +2,17 @@
 [FIDO Specification](http://fidoalliance.org/specifications/download)
 
 This code is to demo how the implementation of the FIDO UAF protocol can be used.
+
+## About this fork
+
+This project is a fork of [eBay UAF Open Source Project](https://github.com/eBay/UAF) with minimal modifications to store data in a MySQL database. 
+
+Follow steps below to create and configure a MySQL database that is required by this project:
+
+1. Create a MySQL database and use [database.sql](database.sql) file to create the tables
+1. Edit [persistence.xml](src/main/resources/META-INF/persistence.xml) according to your needs (i.e hostname, port, database name, mysql username/password)
+
+
 ## UAF Server Endpoints
 ### UAF Operations
 - Registration
