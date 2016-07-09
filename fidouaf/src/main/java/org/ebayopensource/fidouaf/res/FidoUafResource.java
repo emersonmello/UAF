@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fidouaf.res;
 
+import br.edu.ifsc.mello.res.FacetsList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
@@ -58,6 +58,8 @@ import org.ebayopensource.fidouaf.stats.Dash;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import javax.ws.rs.core.Context;
+import br.edu.ifsc.mello.res.StorageMySQLImpl;
 
 @Path("/v1")
 public class FidoUafResource {
@@ -131,7 +133,7 @@ public class FidoUafResource {
 	 * @return  list of allowed AAID - Authenticator Attestation ID.
 	 */
 	private String[] getAllowedAaids() {
-		String[] ret = { "EBA0#0001", "0015#0001", "0012#0002", "0010#0001",
+        String[] ret = {"EBA0#0001", "DMY0#0001", "0015#0001", "0012#0002", "0010#0001",
 				"4e4e#0001", "5143#0001", "0011#0701", "0013#0001",
 				"0014#0000", "0014#0001", "53EC#C002", "DAB8#8001",
 				"DAB8#0011", "DAB8#8011", "5143#0111", "5143#0120",
@@ -159,11 +161,15 @@ public class FidoUafResource {
 	public Facets facets() {
 		String timestamp = new Date().toString();
 		Dash.getInstance().stats.put(Dash.LAST_REG_REQ, timestamp);
-		String[] trustedIds = { "https://www.head2toes.org",
+		/*String[] trustedIds = { "https://www.head2toes.org",
 				"android:apk-key-hash:Df+2X53Z0UscvUu6obxC3rIfFyk",
 				"android:apk-key-hash:bE0f1WtRJrZv/C0y9CM73bAUqiI",
 				"android:apk-key-hash:Lir5oIjf552K/XN4bTul0VS3GfM",
-				"https://openidconnect.ebay.com" };
+				"https://openidconnect.ebay.com" };*/
+                
+                FacetsList facetList = new FacetsList();
+                String[] trustedIds = facetList.getTrustedIds();
+                
 		Facets facets = new Facets();
 		facets.trustedFacets = new TrustedFacets[1];
 		TrustedFacets trusted = new TrustedFacets();
@@ -204,11 +210,15 @@ public class FidoUafResource {
 			result = new ProcessResponse().processRegResponse(registrationResponse);
 			if (result[0].status.equals("SUCCESS")) {
 				try {
-					StorageImpl.getInstance().store(result);
+                   // StorageImpl.getInstance().store(result);
+                  //  System.out.println("memory storage");
+                    StorageMySQLImpl.getInstance().store(result);
+                    System.out.println("db storage");
 				} catch (DuplicateKeyException e) {
 					result = new RegistrationRecord[1];
 					result[0] = new RegistrationRecord();
 					result[0].status = "Error: Duplicate Key";
+                    System.out.println("Error: Duplicate Key");
 				} catch (SystemErrorException e1) {
 					result = new RegistrationRecord[1];
 					result[0] = new RegistrationRecord();
@@ -313,6 +323,11 @@ public class FidoUafResource {
 			Dash.getInstance().history.add(authResp);
 			AuthenticatorRecord[] result = new ProcessResponse()
 					.processAuthResponse(authResp[0]);
+            //TODO KEY_NOT_REGISTERED string was defined by me (is there a standard string for that?
+            if (result != null && result[0].status != null) {
+                System.out.println("result status: " + result[0].status);
+            }
+
 			return result;
 		}
 		return new AuthenticatorRecord[0];
