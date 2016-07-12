@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fidouaf.res.util;
 
+import br.edu.ifsc.mello.res.StorageMySQLImpl;
 import org.ebayopensource.fido.uaf.msg.DeregisterAuthenticator;
 import org.ebayopensource.fido.uaf.msg.DeregistrationRequest;
 import org.ebayopensource.fido.uaf.storage.AuthenticatorRecord;
@@ -39,7 +40,8 @@ public class DeregRequestProcessor {
 					authRecord.KeyID = authenticator.keyID;
 					try {
 						String Key = authRecord.toString();
-						StorageImpl.getInstance().deleteRegistrationRecord(Key);
+						//StorageImpl.getInstance().deleteRegistrationRecord(Key);
+                                                StorageMySQLImpl.getInstance().deleteRegistrationRecord(Key);
 					} catch (Exception e) {
 						return "Failure: Problem in deleting record from local DB";
 					}

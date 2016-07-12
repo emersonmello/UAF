@@ -16,6 +16,7 @@
 
 package org.ebayopensource.fidouaf.res.util;
 
+import br.edu.ifsc.mello.res.StorageMySQLImpl;
 import org.ebayopensource.fido.uaf.msg.AuthenticationResponse;
 import org.ebayopensource.fido.uaf.msg.RegistrationResponse;
 import org.ebayopensource.fido.uaf.ops.AuthenticationResponseProcessing;
@@ -32,12 +33,14 @@ public class ProcessResponse {
 	public AuthenticatorRecord[] processAuthResponse(AuthenticationResponse resp) {
 		AuthenticatorRecord[] result = null;
 		try {
-			result = new AuthenticationResponseProcessing(
+//			result = new AuthenticationResponseProcessing(
+//					SERVER_DATA_EXPIRY_IN_MS, NotaryImpl.getInstance()).verify(
+//					resp, StorageImpl.getInstance());
+                        result = new AuthenticationResponseProcessing(
 					SERVER_DATA_EXPIRY_IN_MS, NotaryImpl.getInstance()).verify(
-					resp, StorageImpl.getInstance());
+					resp, StorageMySQLImpl.getInstance());
 		} catch (Exception e) {
-			System.out
-					.println("!!!!!!!!!!!!!!!!!!!..............................."
+			System.out.println("Error process Auth Response: "
 							+ e.getMessage());
 			result = new AuthenticatorRecord[1];
 			result[0] = new AuthenticatorRecord();
@@ -53,8 +56,7 @@ public class ProcessResponse {
 					SERVER_DATA_EXPIRY_IN_MS, NotaryImpl.getInstance())
 					.processResponse(resp);
 		} catch (Exception e) {
-			System.out
-					.println("!!!!!!!!!!!!!!!!!!!..............................."
+			System.out.println("Error processRegResponse: "
 							+ e.getMessage());
 			result = new RegistrationRecord[1];
 			result[0] = new RegistrationRecord();
