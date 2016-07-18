@@ -19,16 +19,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PublicKey;
 import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.ebayopensource.fido.uaf.crypto.Asn1;
 import org.ebayopensource.fido.uaf.crypto.KeyCodec;
 import org.ebayopensource.fido.uaf.crypto.NamedCurve;
@@ -77,6 +81,27 @@ public class AuthenticationResponseProcessing {
             result[i] = processAssertions(response.assertions[i], serverData);
         }
         return result;
+    }
+
+    public java.security.interfaces.ECPublicKey extractECDSAPubKey(String pubKey) {
+        byte[] decoded = Base64.decodeBase64(pubKey);
+        X509EncodedKeySpec ks = new X509EncodedKeySpec(decoded);
+        KeyFactory kf;
+        try {
+            kf = KeyFactory.getInstance("EC");//, new BouncyCastleProvider());
+            java.security.interfaces.ECPublicKey publicKey;
+            publicKey = (java.security.interfaces.ECPublicKey) kf.generatePublic(ks);
+
+            return publicKey;
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Cryptography error: could not initialize ECDSA keyfactory!: " + e.toString());
+        } catch (InvalidKeySpecException e) {
+            System.err.println("Received invalid key specification from client: " + e.toString());
+            return null;
+        } catch (ClassCastException e) {
+            System.err.println("Received valid X.509 key from client but it was not EC Public Key material: " + e.toString());
+        }
+        return null;
     }
 
     private AuthenticatorRecord processAssertions(
@@ -199,6 +224,16 @@ public class AuthenticationResponseProcessing {
                     return NamedCurve.verify(KeyCodec.getKeyAsRawBytes(decodedPub),
                             SHA.sha(dataForSigning, "SHA-256"),
                             Asn1.decodeToBigIntegerArray(signature.value));
+                }
+            }
+            // Introduced to work with the new FIDOUAFLIB Client -- https://github.com/emersonmello/dummyuafclient
+            if (algAndEncoding == AlgAndEncodingEnum.UAF_ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW) {
+                if (decodeBase64.length > 65) {
+                    return NamedCurve.verify(extractECDSAPubKey(pubKey), SHA.sha(dataForSigning, "SHA-256"), signature.value);
+                } else {
+                    ECPublicKey decodedPub = (ECPublicKey) KeyCodec.getPubKeyFromCurve(
+                            decodeBase64, "secp256r1");
+                    return NamedCurve.verify(KeyCodec.getKeyAsRawBytes(decodedPub), SHA.sha(dataForSigning, "SHA-256"), Asn1.decodeToBigIntegerArray(signature.value));
                 }
             }
             if (signature.value.length == 64) {

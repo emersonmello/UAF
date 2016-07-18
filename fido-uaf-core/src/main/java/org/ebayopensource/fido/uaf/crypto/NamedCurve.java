@@ -101,10 +101,10 @@ public class NamedCurve {
 			byte[] signature) throws NoSuchAlgorithmException,
 			NoSuchProviderException, InvalidKeyException, SignatureException,
 			UnsupportedEncodingException {
-		Signature ecdsaVerify = Signature.getInstance("SHA256withECDSA", "BC");
-		ecdsaVerify.initVerify(pub);
-		ecdsaVerify.update(dataForSigning);
-		return ecdsaVerify.verify(signature);
+                java.security.Signature signatureCheck = java.security.Signature.getInstance("SHA256withECDSA");
+                signatureCheck.initVerify(pub);
+		signatureCheck.update(dataForSigning);                                
+		return signatureCheck.verify(signature);
 	}
 
 	public static boolean checkSignature(PublicKey publicKey,

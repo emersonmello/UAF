@@ -106,7 +106,7 @@ public class KeyCodec {
             System.err.println("BCEPubkey error..: " + e.toString());
             try {
                 ECPublicKey ec = (ECPublicKey) getPubKey(Base64.decodeBase64(base64EncodedPubKey));
-                if (ec != null){
+                if (ec != null) {
                     result = ec.getEncoded();
                 }
             } catch (Exception ee) {
@@ -178,7 +178,19 @@ public class KeyCodec {
             throws InvalidKeySpecException, NoSuchAlgorithmException,
             NoSuchProviderException {
         KeyFactory kf = KeyFactory.getInstance("ECDSA", "BC");
-        return kf.generatePublic(new X509EncodedKeySpec(bytes));
+        X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
+
+        PublicKey pK = null;
+        try {
+            //remotePublicKey = (ECPublicKey) kf.generatePublic(ks);
+            pK = (ECPublicKey) kf.generatePublic(ks);
+        } catch (InvalidKeySpecException e) {
+            System.out.println("Received invalid key specification from client: " + e.toString());
+        } catch (ClassCastException e) {
+            System.out.println("Received valid X.509 key from client but it was not EC Public Key material: " + e.toString());
+        }
+
+        return pK;
     }
 
     public static PrivateKey getPrivKey(byte[] bytes)
