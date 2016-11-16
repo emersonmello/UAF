@@ -199,7 +199,7 @@ public class FidoUafResource {
 
         FacetsList facetList = new FacetsList();
         String[] trustedIdsDB = facetList.getTrustedIds();
-        List<String> listTrustedIdsDB = new ArrayList<String>Arrays.asList(trustedIdsDB));
+        List<String> listTrustedIdsDB = new ArrayList<String>(Arrays.asList(trustedIdsDB));
         trustedIdsList.addAll(listTrustedIdsDB);
 
         Facets facets = new Facets();
