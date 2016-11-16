@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.ebayopensource.fidouaf.res;
 
 import br.edu.ifsc.mello.res.FacetsList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,7 @@ import org.ebayopensource.fidouaf.res.util.FetchRequest;
 import org.ebayopensource.fidouaf.res.util.ProcessResponse;
 import org.ebayopensource.fidouaf.res.util.StorageImpl;
 import org.ebayopensource.fidouaf.stats.Dash;
+import org.ebayopensource.fidouaf.stats.Info;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -63,7 +67,30 @@ import br.edu.ifsc.mello.res.StorageMySQLImpl;
 @Path("/v1")
 public class FidoUafResource {
 
-    Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+	protected Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+
+	@GET
+	@Path("/info")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String info() {
+		return gson.toJson(new Info());
+	}
+
+	@GET
+	@Path("/whitelistuuid/{uuid}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String whitelistuuad(@PathParam("uuid") String uuid) {
+		Dash.getInstance().uuids.add(uuid);
+		return gson.toJson(Dash.getInstance().getInstance().uuids);
+	}
+
+	@GET
+	@Path("/whitelistfacetid/{facetId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String whitelistfacetid(@PathParam("facetId") String facetId) {
+		Dash.getInstance().facetIds.add(facetId);
+		return gson.toJson(Dash.getInstance().facetIds);
+	}
 
     @GET
     @Path("/stats")
@@ -121,24 +148,26 @@ public class FidoUafResource {
         return regReqPublic(username);
     }
 
-    /**
-     * List of allowed AAID - Authenticator Attestation ID. Authenticator
-     * Attestation ID / AAID. A unique identifier assigned to a model, class or
-     * batch of FIDO Authenticators that all share the same characteristics, and
-     * which a Relying Party can use to look up an Attestation Public Key and
-     * Authenticator Metadata for the device. The first 4 characters of the AAID
-     * are the vendorID.
-     *
-     * @return list of allowed AAID - Authenticator Attestation ID.
-     */
-    private String[] getAllowedAaids() {
-        String[] ret = {"EBA0#0001", "DMY0#0001", "0015#0001", "0012#0002", "0010#0001",
-            "4e4e#0001", "5143#0001", "0011#0701", "0013#0001",
-            "0014#0000", "0014#0001", "53EC#C002", "DAB8#8001",
-            "DAB8#0011", "DAB8#8011", "5143#0111", "5143#0120",
-            "4746#F816", "53EC#3801"};
-        return ret;
-    }
+	/**
+	 * List of allowed AAID - Authenticator Attestation ID.
+	 * Authenticator Attestation ID / AAID.
+	 * A unique identifier assigned to a model, class or batch of FIDO Authenticators
+	 * that all share the same characteristics, and which a Relying Party can use
+	 * to look up an Attestation Public Key and Authenticator Metadata for the device.
+	 * The first 4 characters of the AAID are the vendorID.
+	 *
+	 * @return  list of allowed AAID - Authenticator Attestation ID.
+	 */
+	private String[] getAllowedAaids() {
+		String[] ret = { "EBA0#0001", "0015#0001", "0012#0002", "0010#0001",
+				"4e4e#0001", "5143#0001", "0011#0701", "0013#0001",
+				"0014#0000", "0014#0001", "53EC#C002", "DAB8#8001",
+				"DAB8#0011", "DAB8#8011", "5143#0111", "5143#0120",
+				"4746#F816", "53EC#3801" };
+		List<String> retList = new ArrayList<String>(Arrays.asList(ret));
+		retList.addAll(Dash.getInstance().uuids);
+		return retList.toArray(new String[0]);
+	}
 
     /**
      * List of trusted Application Facet ID. An (application) facet is how an
@@ -160,20 +189,24 @@ public class FidoUafResource {
     public Facets facets() {
         String timestamp = new Date().toString();
         Dash.getInstance().stats.put(Dash.LAST_REG_REQ, timestamp);
-        /*String[] trustedIds = { "https://www.head2toes.org",
+        String[] trustedIds = { "https://www.head2toes.org",
 				"android:apk-key-hash:Df+2X53Z0UscvUu6obxC3rIfFyk",
 				"android:apk-key-hash:bE0f1WtRJrZv/C0y9CM73bAUqiI",
 				"android:apk-key-hash:Lir5oIjf552K/XN4bTul0VS3GfM",
-				"https://openidconnect.ebay.com" };*/
+				"https://openidconnect.ebay.com" };
+        List<String> trustedIdsList = new ArrayList<String>(Arrays.asList(trustedIds));
+        trustedIdsList.addAll(Dash.getInstance().facetIds);
 
         FacetsList facetList = new FacetsList();
-        String[] trustedIds = facetList.getTrustedIds();
+        String[] trustedIdsDB = facetList.getTrustedIds();
+        List<String> listTrustedIdsDB = new ArrayList<String>Arrays.asList(trustedIdsDB));
+        trustedIdsList.addAll(listTrustedIdsDB);
 
         Facets facets = new Facets();
         facets.trustedFacets = new TrustedFacets[1];
         TrustedFacets trusted = new TrustedFacets();
         trusted.version = new Version(1, 0);
-        trusted.ids = trustedIds;
+        trusted.ids = trustedIdsList.toArray(new String[0]);
         facets.trustedFacets[0] = trusted;
         return facets;
     }
