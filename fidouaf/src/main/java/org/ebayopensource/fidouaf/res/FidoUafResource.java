@@ -17,11 +17,14 @@
 package org.ebayopensource.fidouaf.res;
 
 import br.edu.ifsc.mello.res.FacetsList;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -202,6 +205,7 @@ public class FidoUafResource {
         List<String> listTrustedIdsDB = new ArrayList<String>(Arrays.asList(trustedIdsDB));
         trustedIdsList.addAll(listTrustedIdsDB);
 
+        trustedIdsList.add(readFacet());
         Facets facets = new Facets();
         facets.trustedFacets = new TrustedFacets[1];
         TrustedFacets trusted = new TrustedFacets();
@@ -211,21 +215,31 @@ public class FidoUafResource {
         return facets;
     }
 
-    /**
-     * The AppID is an identifier for a set of different Facets of a relying
-     * party's application. The AppID is a URL pointing to the TrustedFacets,
-     * i.e. list of FacetIDs related to this AppID.
-     *
-     * @return a URL pointing to the TrustedFacets
-     */
-    @Context
-    UriInfo uriInfo;
+	private String readFacet() {
+		InputStream in = getClass().getResourceAsStream("config.properties");
+		String facetVal = "";
+		try {
+			Properties props = new Properties();
+			props.load(in);
+			facetVal = props.getProperty("facetId");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 
+		return facetVal.toString();
+	}
 
-    private String getAppId() {
-        // You can get it dynamically.
-        // It only works if your server is not behind a reverse proxy
-        return uriInfo.getBaseUri() + "v1/public/uaf/facets";
-        // Or you can define it statically
+	/**
+	 * The AppID is an identifier for a set of different Facets of a relying
+	 * party's application. The AppID is a URL pointing to the TrustedFacets,
+	 * i.e. list of FacetIDs related to this AppID.
+	 * @return a URL pointing to the TrustedFacets
+	 */
+	@Context UriInfo uriInfo;
+	private String getAppId() {
+		// You can get it dynamically.
+		// It only works if your server is not behind a reverse proxy
+		return uriInfo.getBaseUri() + "v1/public/uaf/facets";
+		// Or you can define it statically
 //		return "https://www.head2toes.org/fidouaf/v1/public/uaf/facets";
     }
 

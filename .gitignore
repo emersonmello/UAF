@@ -14,7 +14,10 @@ nbactions.xml
 .nb-gradle/
 nb-configuration.xml
 
-
 ### Java ###
 *.class
 
+.idea
+.idea/*
+*.iml
+local.properties
